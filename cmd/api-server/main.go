@@ -5,7 +5,10 @@ import (
 	"net/http"
 )
 
-var Commit string
+var (
+	Commit    string
+	BuildTime string
+)
 
 func main() {
 	http.HandleFunc("/debug/info", handleServiceInfo)
@@ -21,9 +24,9 @@ func handleServiceInfo(w http.ResponseWriter, req *http.Request) {
 	switch format {
 	case "application/json":
 		w.Header().Set("Content-Type", "application/json")
-		resp = fmt.Sprintf(`{"commit":"%s"}`, Commit)
+		resp = fmt.Sprintf(`{"commit":"%s","date":"%s"}`, Commit, BuildTime)
 	default:
-		resp = "Commit SHA1: " + Commit
+		resp = "Commit SHA1: " + Commit + " " + BuildTime
 	}
 	fmt.Fprintln(w, resp)
 }

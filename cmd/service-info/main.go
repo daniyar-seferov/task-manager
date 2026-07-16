@@ -35,6 +35,7 @@ func run() error {
 
 type VersionResponse struct {
 	Commit string `json:"commit"`
+	Date   string `json:"date"`
 }
 
 func runVersions() error {
@@ -48,7 +49,13 @@ func runVersions() error {
 	if err := json.Unmarshal(resp, &ver); err != nil {
 		return fmt.Errorf("unmarshal json: %w", err)
 	}
-	fmt.Println("api-server:", ver.Commit)
+
+	t, err := time.Parse(time.RFC3339, ver.Date)
+	if err != nil {
+		return fmt.Errorf("parse date: %w", err)
+	}
+
+	fmt.Println("api-server:", ver.Commit, timeAgo(t))
 	return nil
 }
 
@@ -76,4 +83,23 @@ func sendRequest(method, url string, body io.Reader) ([]byte, error) {
 		return nil, fmt.Errorf("read body: %w", err)
 	}
 	return respBody, nil
+}
+
+func timeAgo(t time.Time) string {
+	d := time.Since(t)
+
+	switch {
+	case d < time.Minute:
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	case d < time.Hour:
+		return fmt.Sprintf("%dm", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%dh", int(d.Hours()))
+	case d < 30*24*time.Hour:
+		return fmt.Sprintf("%dd", int(d.Hours()/24))
+	case d < 365*24*time.Hour:
+		return fmt.Sprintf("%dmo", int(d.Hours()/(24*30)))
+	default:
+		return fmt.Sprintf("%dy", int(d.Hours()/(24*365)))
+	}
 }
